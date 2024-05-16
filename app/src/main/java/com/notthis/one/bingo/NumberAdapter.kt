@@ -52,6 +52,7 @@ class NumberAdapter : ListAdapter<Int, NumberAdapter.NumberViewHolder>(NumberDif
 
   fun restore() {
     selectedPosition.clear()
+    notifyDataSetChanged()
   }
 
   companion object NumberDiffUtil : DiffUtil.ItemCallback<Int>() {
