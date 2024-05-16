@@ -4,8 +4,6 @@ import android.os.Bundle
 import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -30,7 +28,7 @@ class MainActivity : AppCompatActivity() {
     setView()
     lifecycleScope.launch {
       repeatOnLifecycle(Lifecycle.State.CREATED) {
-        if (checkWinOrNot(numberAdapter.selectedPosition, matrixSize, winCondition)){
+        if (checkWinOrNot(numberAdapter.selectedPositions, matrixSize, winCondition)) {
           binding.tvWin.visibility = View.VISIBLE
         } else {
           binding.tvWin.visibility = View.GONE
@@ -47,7 +45,7 @@ class MainActivity : AppCompatActivity() {
         (layoutManager as GridLayoutManager).spanCount = matrixSize
       }
       with(btn) {
-        setOnClickListener{
+        setOnClickListener {
           numberAdapter.submitList(generateRandomNumber(randomNumber, matrixSize))
           numberAdapter.restore()
         }
@@ -55,63 +53,101 @@ class MainActivity : AppCompatActivity() {
     }
   }
 
-  fun generateRandomNumber(range: Int, size: Int): List<Int> {
-    return (1..range).shuffled().take(size * size)
+  fun generateRandomNumber(
+    range: Int,
+    size: Int
+  ): List<Int> {
+    return (1..range).shuffled()
+      .take(size * size)
   }
 
-  fun checkWinOrNot(selectedCoordinate: List<Int>, size: Int, winCondition: Int): Boolean {
-    val bingoNumbers = selectedCoordinate.toSet() // 將已選擇的數字轉換為集合，方便查找
+  fun checkWinOrNot(
+    selectedCoordinate: List<Int>,
+    size: Int,
+    winCondition: Int
+  ): Boolean {
+    val sortedSelectedCoordinate = selectedCoordinate.sorted()
     var totalMatchedLine = 0
-    // 檢查每一行
-    for (row in 0 until size * size) {
-      var rowMatchCount = 0 // 計算符合的數字數量
-      for (col in 0 until size) {
-        val number = row * size + col // 計算矩陣中的索引
-        if (number in bingoNumbers) { // 如果該數字已經選中
-          rowMatchCount++ // 符合的數字數量加一
+    // 0 - 8 (3 * 3)
+    // 0 1 2
+    // 3 4 5
+    // 6 7 8
+
+    // selected 0,1,2,3,7,8, 要是 sorted 的
+    // 一個 for loop 跑 整個 matrix size
+    // 1. 橫的連續數字有 matrix size 個 = 一條
+    // 2. 直的為 matrix size 的等差且有 matrix size 個 = 一條
+    // 3. 對角線以最左上角的元素開始數(0)，為 matrix size + 1 的等差且有 matrix size 個 = 一條
+    // 4. 對角線以最右上的元素開始數(matrix size - 1)，為 matrix size - 1 的等差且有 matrix size 個 = 一條
+
+
+    // 檢查行
+    for (row in sortedSelectedCoordinate) {
+      // 當有第一列的元素時，啟動行的檢查 EX: 有 3 檢查有無 4, 5
+      if (row % size == 0) {
+        for (i in 0 until size) {
+          var rowMatchCount = 0
+          val number = row + i
+
+          if (sortedSelectedCoordinate.contains(number)) {
+            rowMatchCount++
+          }
+          if (rowMatchCount == size) {
+            totalMatchedLine++
+          }
+        }
+      } else {
+        continue
+      }
+    }
+
+    // 檢查列
+    for (col in sortedSelectedCoordinate) {
+      // 當有第一行的元素時，啟動列的檢查 EX: 有 1 檢查有無 4, 7
+      if (col < size) {
+        for (i in 0 until size) {
+          var rowMatchCount = 0 // 計算符合的數字數量
+          val number = col + size * i
+
+          if (sortedSelectedCoordinate.contains(number)) {
+            rowMatchCount++
+          }
+          if (rowMatchCount == size) {
+            totalMatchedLine++
+          }
+        }
+      } else {
+        continue
+      }
+    }
+
+    // 檢查主對角線(左上 - 右下)，找左上元素(0)
+    if (sortedSelectedCoordinate.contains(0)) {
+      for (i in 0 until size) {
+        var diagonalMatchCount = 0
+        val number = (1 + size) * i
+
+        if (sortedSelectedCoordinate.contains(number)) {
+          diagonalMatchCount++
+        }
+        if (diagonalMatchCount == size) {
+          totalMatchedLine++
         }
       }
-      if (rowMatchCount == size) { // 如果某一行的所有數字都已選中
-        totalMatchedLine++
-      }
     }
+    // 檢查次對角線(右上 - 左下)，找右上元素(2)
+    if (sortedSelectedCoordinate.contains(size - 1)) {
+      for (i in 0 until size) {
+        var subDiagonalMatchCount = 0
+        val number = (size - 1) * i
 
-    // 檢查每一列
-    for (col in 0 until size) {
-      var colMatchCount = 0 // 計算符合的數字數量
-      for (row in 0 until size) {
-        val number = row * size + col // 計算矩陣中的索引
-        if (number in bingoNumbers) { // 如果該數字已經選中
-          colMatchCount++ // 符合的數字數量加一
+        if (sortedSelectedCoordinate.contains(number)) {
+          subDiagonalMatchCount++
+        }
+        if (subDiagonalMatchCount == size) {
+          totalMatchedLine++
         }
       }
-      if (colMatchCount == size) { // 如果某一列的所有數字都已選中
-        totalMatchedLine ++
-      }
-    }
-
-    // 檢查主對角線
-    var mainDiagonalMatchCount = 0 // 計算符合的數字數量
-    for (i in 0 until size) {
-      val number = i * size + i // 計算主對角線上的索引
-      if (number in bingoNumbers) { // 如果該數字已經選中
-        mainDiagonalMatchCount++ // 符合的數字數量加一
-      }
-    }
-    if (mainDiagonalMatchCount == size) { // 如果主對角線的所有數字都已選中
-      totalMatchedLine ++
-    }
-
-    // 檢查次對角線
-    var subDiagonalMatchCount = 0 // 計算符合的數字數量
-    for (i in 0 until size) {
-      val number = (i + 1) * (size - 1) // 計算次對角線上的索引
-      if (number in bingoNumbers) { // 如果該數字已經選中
-        subDiagonalMatchCount++ // 符合的數字數量加一
-      }
-    }
-    if (subDiagonalMatchCount == size) { // 如果次對角線的所有數字都已選中
-      totalMatchedLine ++
     }
 
     if (totalMatchedLine >= winCondition) {

@@ -10,7 +10,7 @@ import com.notthis.one.bingo.databinding.CellNumberBinding
 
 class NumberAdapter : ListAdapter<Int, NumberAdapter.NumberViewHolder>(NumberDiffUtil) {
 
-  val selectedPosition = mutableListOf<Int>()
+  val selectedPositions = mutableListOf<Int>()
 
   override fun onBindViewHolder(
     holder: NumberViewHolder,
@@ -38,11 +38,11 @@ class NumberAdapter : ListAdapter<Int, NumberAdapter.NumberViewHolder>(NumberDif
       binding.tvNumber.apply {
         text = number.toString()
         setOnClickListener {
-          if (selectedPosition.contains(bindingAdapterPosition)) {
-            selectedPosition.remove(bindingAdapterPosition)
+          if (selectedPositions.contains(bindingAdapterPosition)) {
+            selectedPositions.remove(bindingAdapterPosition)
             setBackgroundColor(Color.WHITE)
           } else {
-            selectedPosition.add(bindingAdapterPosition)
+            selectedPositions.add(bindingAdapterPosition)
             setBackgroundColor(Color.YELLOW)
           }
         }
@@ -51,7 +51,7 @@ class NumberAdapter : ListAdapter<Int, NumberAdapter.NumberViewHolder>(NumberDif
   }
 
   fun restore() {
-    selectedPosition.clear()
+    selectedPositions.clear()
     notifyDataSetChanged()
   }
 
