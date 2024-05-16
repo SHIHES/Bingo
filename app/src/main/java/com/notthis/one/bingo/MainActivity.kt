@@ -25,7 +25,7 @@ class MainActivity : AppCompatActivity() {
       if (checkWinOrNot(numberAdapter.selectedPositions, matrixSize, winCondition)) {
         binding.tvWin.visibility = View.VISIBLE
       } else {
-        binding.tvWin.visibility = View.GONE
+        binding.tvWin.visibility = View.INVISIBLE
       }
     }
   }
@@ -50,6 +50,7 @@ class MainActivity : AppCompatActivity() {
         setOnClickListener {
           numberAdapter.restore()
           numberAdapter.submitList(generateRandomNumber(randomNumber, matrixSize))
+          binding.tvWin.visibility = View.INVISIBLE
         }
       }
     }
