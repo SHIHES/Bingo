@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.notthis.one.bingo.databinding.CellNumberBinding
 
-class NumberAdapter : ListAdapter<Int, NumberAdapter.NumberViewHolder>(NumberDiffUtil) {
+class NumberAdapter(private val listener: NumberListener) : ListAdapter<Int, NumberAdapter.NumberViewHolder>(NumberDiffUtil) {
 
   val selectedPositions = mutableListOf<Int>()
 
@@ -45,6 +45,7 @@ class NumberAdapter : ListAdapter<Int, NumberAdapter.NumberViewHolder>(NumberDif
             selectedPositions.add(bindingAdapterPosition)
             setBackgroundColor(Color.YELLOW)
           }
+          listener.onNumberSelected()
         }
       }
     }
@@ -55,19 +56,23 @@ class NumberAdapter : ListAdapter<Int, NumberAdapter.NumberViewHolder>(NumberDif
     notifyDataSetChanged()
   }
 
+  interface NumberListener {
+    fun onNumberSelected()
+  }
+
   companion object NumberDiffUtil : DiffUtil.ItemCallback<Int>() {
     override fun areItemsTheSame(
       oldItem: Int,
       newItem: Int
     ): Boolean {
-      return oldItem == newItem
+      return false
     }
 
     override fun areContentsTheSame(
       oldItem: Int,
       newItem: Int
     ): Boolean {
-      return oldItem === newItem
+      return false
     }
   }
 }

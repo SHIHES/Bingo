@@ -1,6 +1,7 @@
 package com.notthis.one.bingo
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -14,27 +15,28 @@ import kotlinx.coroutines.launch
 class MainActivity : AppCompatActivity() {
 
   lateinit var binding: ActivityMainBinding
-  private val numberAdapter = NumberAdapter()
+  lateinit var numberAdapter: NumberAdapter
 
   private val randomNumber = 25
   private val matrixSize = 3
   private val winCondition = 2
+  private val numberListener: NumberAdapter.NumberListener = object : NumberAdapter.NumberListener {
+    override fun onNumberSelected() {
+      if (checkWinOrNot(numberAdapter.selectedPositions, matrixSize, winCondition)) {
+        binding.tvWin.visibility = View.VISIBLE
+      } else {
+        binding.tvWin.visibility = View.GONE
+      }
+    }
+  }
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     enableEdgeToEdge()
     binding = ActivityMainBinding.inflate(layoutInflater)
+    numberAdapter = NumberAdapter(numberListener)
     setContentView(binding.root)
     setView()
-    lifecycleScope.launch {
-      repeatOnLifecycle(Lifecycle.State.CREATED) {
-        if (checkWinOrNot(numberAdapter.selectedPositions, matrixSize, winCondition)) {
-          binding.tvWin.visibility = View.VISIBLE
-        } else {
-          binding.tvWin.visibility = View.GONE
-        }
-      }
-    }
   }
 
   fun setView() {
@@ -46,8 +48,8 @@ class MainActivity : AppCompatActivity() {
       }
       with(btn) {
         setOnClickListener {
-          numberAdapter.submitList(generateRandomNumber(randomNumber, matrixSize))
           numberAdapter.restore()
+          numberAdapter.submitList(generateRandomNumber(randomNumber, matrixSize))
         }
       }
     }
@@ -85,14 +87,15 @@ class MainActivity : AppCompatActivity() {
     for (row in sortedSelectedCoordinate) {
       // 當有第一列的元素時，啟動行的檢查 EX: 有 3 檢查有無 4, 5
       if (row % size == 0) {
+        var rowMatchCount = 0
         for (i in 0 until size) {
-          var rowMatchCount = 0
           val number = row + i
 
           if (sortedSelectedCoordinate.contains(number)) {
             rowMatchCount++
           }
           if (rowMatchCount == size) {
+            Log.d("Steven", "from row")
             totalMatchedLine++
           }
         }
@@ -105,14 +108,15 @@ class MainActivity : AppCompatActivity() {
     for (col in sortedSelectedCoordinate) {
       // 當有第一行的元素時，啟動列的檢查 EX: 有 1 檢查有無 4, 7
       if (col < size) {
+        var rowMatchCount = 0 // 計算符合的數字數量
         for (i in 0 until size) {
-          var rowMatchCount = 0 // 計算符合的數字數量
           val number = col + size * i
 
           if (sortedSelectedCoordinate.contains(number)) {
             rowMatchCount++
           }
           if (rowMatchCount == size) {
+            Log.d("Steven", "from col")
             totalMatchedLine++
           }
         }
@@ -123,33 +127,35 @@ class MainActivity : AppCompatActivity() {
 
     // 檢查主對角線(左上 - 右下)，找左上元素(0)
     if (sortedSelectedCoordinate.contains(0)) {
+      var diagonalMatchCount = 0
       for (i in 0 until size) {
-        var diagonalMatchCount = 0
         val number = (1 + size) * i
 
         if (sortedSelectedCoordinate.contains(number)) {
           diagonalMatchCount++
         }
         if (diagonalMatchCount == size) {
+          Log.d("Steven", "from dia")
           totalMatchedLine++
         }
       }
     }
     // 檢查次對角線(右上 - 左下)，找右上元素(2)
     if (sortedSelectedCoordinate.contains(size - 1)) {
-      for (i in 0 until size) {
-        var subDiagonalMatchCount = 0
+      var subDiagonalMatchCount = 0
+      for (i in 1 until size + 1) {
         val number = (size - 1) * i
 
         if (sortedSelectedCoordinate.contains(number)) {
           subDiagonalMatchCount++
         }
         if (subDiagonalMatchCount == size) {
+          Log.d("Steven", "from subdia")
           totalMatchedLine++
         }
       }
     }
-
+    Log.d("Steven", "totalMatchedLine: $totalMatchedLine \n selectedCoordinate: $sortedSelectedCoordinate")
     if (totalMatchedLine >= winCondition) {
       return true
     }
